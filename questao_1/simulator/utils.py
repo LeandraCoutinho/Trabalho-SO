@@ -36,7 +36,7 @@ def calculate_metrics(
         }
 
     # Coleta os dados diretamente, confiando nos atributos e propriedades
-    turnaround_times = [p.turnaround_time_process for p in processes]
+    turnaround_times = [p.turnaround_time for p in processes]
     waiting_times = [p.waiting_time for p in processes]
     response_times = [p.response_time for p in processes]
 

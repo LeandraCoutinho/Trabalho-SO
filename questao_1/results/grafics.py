@@ -1,3 +1,4 @@
+from typing import Dict, Any
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -10,27 +11,36 @@ def _setup_output_dir():
     if not os.path.exists(OUTPUT_DIR):
         os.makedirs(OUTPUT_DIR)
 
-def generate_required_charts(results: dict):
-    """
-    Gera e salva os gráficos de barras comparando as métricas exigidas pela questão.
-    """
+def generate_required_charts(metrics: Dict[str, Any]): 
+    """Gera e salva os gráficos de barras comparando as métricas exigidas pela questão."""
     _setup_output_dir()
     print("\nGerando gráficos de métricas comparativas...")
 
     # Prepara os dados para o DataFrame do pandas
     metrics_list = []
-    for alg, data in results.items():
-        metrics = data['metrics']
+    for data in metrics:  # metrics agora é lista
+        alg = data.get('algoritmo', 'Algoritmo')
+        m = data.get('metrics', {})
         metrics_list.append({
             'Algoritmo': alg,
-            'Avg Espera': metrics.get('avg_waiting_time', 0),
-            'Std Espera': metrics.get('std_waiting_time', 0),
-            'Avg Retorno': metrics.get('avg_turnaround_time', 0),
-            'Std Retorno': metrics.get('std_turnaround_time', 0),
-            'Vazão': metrics.get('throughput', 0),
-            'Janela de Vazão': metrics.get('throughput_window', 'N/A')
+            'Avg Espera': m.get('avg_waiting_time', 0),
+            'Std Espera': m.get('std_waiting_time', 0),
+            'Avg Retorno': m.get('avg_turnaround_time', 0),
+            'Std Retorno': m.get('std_turnaround_time', 0),
+            'Vazão': m.get('throughput', 0),
+            'Janela de Vazão': m.get('throughput_window', 'N/A'),
+            'quantum': m.get('quantum', None)
         })
+
     df = pd.DataFrame(metrics_list)
+
+    # Ajusta o nome do algoritmo para RR com quantum
+    df['Algoritmo'] = df.apply(
+        lambda row: f"RR (Q={int(row['quantum'])})"
+                    if pd.notna(row['quantum'])
+                    else row['Algoritmo'],
+        axis=1
+    )
 
     # --- Gráfico 1: Tempo Médio de Espera ---
     plt.figure(figsize=(10, 6))
@@ -59,8 +69,7 @@ def generate_required_charts(results: dict):
     bars_retorno = plt.bar(
         df['Algoritmo'], 
         df['Avg Retorno'], 
-        yerr=df['Std Retorno'], # Adiciona o desvio padrão como barra de erro
-        capsize=5, 
+        yerr=df['Std Retorno'],
         color='lightcoral',
         alpha=0.9
     )
@@ -85,7 +94,6 @@ def generate_required_charts(results: dict):
     plt.xticks(rotation=45, ha="right")
     for bar in bars_vazao:
         yval = bar.get_height()
-        # Vazão é um número inteiro, então formatamos sem casas decimais
         plt.text(bar.get_x() + bar.get_width()/2.0, yval, f'{int(yval)}', va='bottom', ha='center')
     plt.tight_layout()
     path_vazao = os.path.join(OUTPUT_DIR, "comparativo_vazao.png")

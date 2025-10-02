@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any 
 from .models import Process
 import copy
 from .fcfs_sjf import fcfs, sjf 
@@ -21,7 +21,7 @@ class Simulator:
             Process(**p) for p in config["workload"]["processes"]
         ]
 
-        self.results: Dict[str, Any] = {}
+        self.results: Dict[str, Any] = {"metricas": [], "execucao": {}} 
 
     def run_simulation(self):
         """Executa a simulação para todos os algoritmos configurados."""
@@ -64,18 +64,26 @@ class Simulator:
             self._process_results(alg_name, result_tuple)
 
     def _process_results(self, alg_name: str, result_tuple: tuple):
-        """Calcula e armazena métricas e a sequência de execução."""        
+        """Calcula e armazena métricas e a sequência de execução.""" 
+        
         
         completed_processes, timeline = result_tuple
-      
+        
+       
         metrics = calculate_metrics(completed_processes, alg_name, self.throughput_window_T)
 
-        self.results[alg_name] = {
-            "metrics": metrics,
-            "completed_processes": completed_processes,
-            "timeline": timeline
-        }
+        if alg_name.startswith("RR"):
+            # Extrai o valor do quantum do nome 
+            quantum_val = int(alg_name.split('=')[1].replace(')', ''))
+            metrics["quantum"] = quantum_val
         
-    def get_results(self) -> Dict[str, Any]:
+        # 2. Armazena as métricas em uma lista
+        self.results["metricas"].append(metrics)
+        
+        # 3. Armazena a sequência de execução detalhada 
+        self.results["execucao"][alg_name] = completed_processes
+
+    
+    def get_results(self):
         """Retorna todos os resultados da simulação."""
         return self.results

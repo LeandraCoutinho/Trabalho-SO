@@ -40,12 +40,19 @@ def display_and_save_results(results: dict):
     
     for alg_name, exec_seq in results["execucao"].items():
         print(f"\n--- Algoritmo: {alg_name} ---")
-        df_exec = pd.DataFrame(exec_seq)
+        df_exec = pd.DataFrame([asdict(p) for p in exec_seq]) 
         
-        display_cols = ['pid', 'arrival', 'burst', 'start', 'end', 'waiting', 'turnaround']
-        
-        print(df_exec.to_string(index=False))
-    df_exec = df_exec[[c for c in display_cols if c in df_exec.columns]]
+        display_cols = ['pid', 'arrival_time', 'burst_time', 'start_time', 'finish_time', 'waiting_time', 'turnaround_time']
+        df_exec_display = df_exec[[c for c in display_cols if c in df_exec.columns]].rename(columns={
+            'arrival_time': 'arrival', 
+            'burst_time': 'burst', 
+            'start_time': 'start', 
+            'finish_time': 'end', 
+            'waiting_time': 'waiting',
+            'turnaround_time': 'turnaround' 
+        })
 
+        print(df_exec_display.to_string(index=False)) # Imprime o DataFrame de exibição
+       
     print("=" * 60)
     print("Simulação concluída. Pronto para a apresentação/demonstração.")
