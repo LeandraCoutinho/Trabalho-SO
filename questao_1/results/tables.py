@@ -24,17 +24,10 @@ def display_and_save_results(results: dict):
     print("\n## 1. Tabela de Métricas (Média de Espera, Retorno e Vazão)")
     
     df_metrics = pd.DataFrame(results["metricas"])
-    
  
-    df_metrics_display = df_metrics[[
-        'algoritmo', 
-        'quantum', 
-        'tempo_medio_espera', 
-        'tempo_medio_retorno', 
-        'vazao'
-    ]].fillna({'quantum': '-'})
+    columns_to_display = [c for c in ['algorithm', 'quantum', 'avg_waiting_time', 'avg_turnaround_time', 'throughput'] if c in df_metrics.columns]
+    df_metrics_display = df_metrics[columns_to_display].fillna({'quantum': '-'})
 
-    
     format_mapping = {
         col: '{:.2f}'.format for col in df_metrics_display.select_dtypes(include=['float64']).columns
     }
@@ -49,10 +42,10 @@ def display_and_save_results(results: dict):
         print(f"\n--- Algoritmo: {alg_name} ---")
         df_exec = pd.DataFrame(exec_seq)
         
-        df_exec = df_exec[['pid', 'chegada', 'burst', 'inicio', 'fim', 'espera', 'retorno']]
+        display_cols = ['pid', 'arrival', 'burst', 'start', 'end', 'waiting', 'turnaround']
         
         print(df_exec.to_string(index=False))
-        save_table(df_exec, f"execucao_{alg_name.replace(' ', '_').replace('=', '')}.csv")
-    
+    df_exec = df_exec[[c for c in display_cols if c in df_exec.columns]]
+
     print("=" * 60)
     print("Simulação concluída. Pronto para a apresentação/demonstração.")

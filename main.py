@@ -1,6 +1,7 @@
 from questao_1.simulator.utils import read_json
 from questao_1.simulator.core import Simulator
 from questao_1.results.tables import display_and_save_results
+from questao_1.results.grafics import generate_required_charts
    
 CONFIG_FILE = "config.json"
 
@@ -11,10 +12,12 @@ def main():
         config = read_json(CONFIG_FILE)
         
         simulator = Simulator(config)
-        simulator.run()
+        simulator.run_simulation()
         
         results = simulator.get_results()
         display_and_save_results(results)
+
+        generate_required_charts(results["metrics"])
         
     except FileNotFoundError:
         print(f"ERRO: Arquivo de configuração '{CONFIG_FILE}' não encontrado.")

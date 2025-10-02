@@ -1,4 +1,3 @@
-
 import copy
 from collections import deque
 from typing import List
@@ -14,53 +13,64 @@ def round_robin(processes: List[Process], quantum: int, context_switch_cost: int
     
     ready_queue = deque()
     completed_processes = []
+    timeline = []
     current_time = 0
-    process_index = 0
-    running_process = None
+    process_idx = 0
+    num_processes = len(process_list)
     
-    while len(completed_processes) < len(process_list):
-        while process_index < len(process_list) and process_list[process_index].arrival_time <= current_time:
-            ready_queue.append(process_list[process_index])
-            process_index += 1
+    last_running_process: Process = None
+
+    while len(completed_processes) < num_processes:
         
-        if running_process is None and ready_queue:
-            process_to_run = ready_queue.popleft()
+        while process_idx < num_processes and process_list[process_idx].arrival_time <= current_time:
+            ready_queue.append(process_list[process_idx])
+            process_idx += 1
 
-            if current_time > 0 and (process_to_run.remaining_time < process_to_run.burst_time):
-                current_time += context_switch_cost
-
-                while process_index < len(process_list) and process_list[process_index].arrival_time <= current_time:
-                    ready_queue.append(process_list[process_index])
-                    process_index += 1
-            
-            if process_to_run.start_time is None:
-                process_to_run.start_time = current_time
-            
-            running_process = process_to_run
-            
-        if running_process is None:
-            if process_index < len(process_list):
-                current_time = process_list[process_index].arrival_time
-                continue
+        if not ready_queue:
+            if process_idx < num_processes:
+                current_time = process_list[process_idx].arrival_time
             else:
-                break 
-       
-        time_to_execute = min(quantum, running_process.remaining_time)
-        
-        current_time += time_to_execute
-        running_process.remaining_time -= time_to_execute
-        
-        while process_index < len(process_list) and process_list[process_index].arrival_time <= current_time:
-            ready_queue.append(process_list[process_index])
-            process_index += 1
-        
-        if running_process.remaining_time == 0:
-            running_process.finish_time = current_time
-            running_process.turnaround_time = running_process.finish_time - running_process.arrival_time
-            completed_processes.append(running_process)
-        else:
-            ready_queue.append(running_process)
-            
-        running_process = None
+                break
+            last_running_process = None
+            continue
 
-    return sorted(completed_processes, key=lambda p: p.pid)
+        process = ready_queue.popleft()
+
+        if last_running_process and last_running_process.pid != process.pid:
+            current_time += context_switch_cost
+            while process_idx < num_processes and process_list[process_idx].arrival_time <= current_time:
+                ready_queue.append(process_list[process_idx])
+                process_idx += 1
+
+        if process.start_time is None:
+            process.start_time = current_time
+        
+        time_slice = min(quantum, process.remaining_time)
+        
+        slice_start_time = current_time
+        current_time += time_slice
+        
+        timeline.append({
+            "pid": process.pid,
+            "start": slice_start_time,
+            "finish": current_time
+        })
+
+        process.remaining_time -= time_slice
+        
+        last_running_process = process
+
+        while process_idx < num_processes and process_list[process_idx].arrival_time <= current_time:
+            ready_queue.append(process_list[process_idx])
+            process_idx += 1
+            
+        if process.remaining_time == 0:
+            process.finish_time = current_time
+            process.waiting_time = process.finish_time - process.arrival_time - process.burst_time
+            completed_processes.append(process)
+            last_running_process = None
+        else:
+            ready_queue.append(process)
+
+    completed_processes.sort(key=lambda p: p.pid)
+    return completed_processes, timeline

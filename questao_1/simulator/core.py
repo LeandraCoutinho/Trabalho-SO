@@ -3,7 +3,7 @@ from .models import Process
 import copy
 from .fcfs_sjf import fcfs, sjf 
 from .round_robin import round_robin
-from .utils import calculate_metrics, format_execution_sequence
+from .utils import calculate_metrics, calculate_throughput
 
 class Simulator:
     """
@@ -21,57 +21,61 @@ class Simulator:
             Process(**p) for p in config["workload"]["processes"]
         ]
 
-        self.processo_em_execucao: Process = None
-        self.resultados = {
-            "execucao": [],
-            "metricas": {}
-        }
+        self.results: Dict[str, Any] = {}
 
     def run_simulation(self):
-        """Executa FCFS, SJF e RR (com seus respectivos quantums)."""
-        
+        """Executa a simulação para todos os algoritmos configurados."""
+        print("Iniciando simulação...")
+
         for alg in self.algorithms:
-            current_processes = copy.deepcopy(self.base_processes)
-
             if alg == "FCFS":
-                print("Executando FCFS...")
-                completed = fcfs(current_processes)
-                self._process_results("FCFS", completed)
-
+                self._run_fcfs()
             elif alg == "SJF":
-                print("Executando SJF (Não-Preemptivo)...")
-                completed = sjf(current_processes)
-                self._process_results("SJF", completed)
-
+                self._run_sjf()
             elif alg == "RR":
-                for q in self.rr_quantums:
-                    alg_name = f"RR (Q={q})"
-                    print(f"Executando {alg_name}...")
-                                       
-                    rr_processes = copy.deepcopy(self.base_processes)
-                    
-                    completed = round_robin(
-                        rr_processes, 
-                        quantum=q, 
-                        context_switch_cost=self.context_switch_cost
-                    )
-                    self._process_results(alg_name, completed, quantum=q)
+                self._run_rr()
             else:
-                print(f"Algoritmo '{alg}' não reconhecido.")
-                
+                print(f"Alerta: Algoritmo '{alg}' não reconhecido.")
+        
         print("\nSimulação concluída!")
 
-    def _process_results(self, alg_name: str, completed_processes: List[Process], quantum: int = None):
+    def _run_fcfs(self):
+        print("Executando FCFS...")
+        result_tuple = fcfs(self.processes, self.context_switch_cost)
+        self._process_results("FCFS", result_tuple)
+
+    def _run_sjf(self):
+        print("Executando SJF (Não-Preemptivo)...")
+        result_tuple = sjf(self.processes, self.context_switch_cost)
+        self._process_results("SJF", result_tuple)
+
+    def _run_rr(self):
+        for q in self.rr_quantums:
+            alg_name = f"RR (Q={q})"
+            print(f"Executando {alg_name}...")
+            
+            procs_copy = [copy.deepcopy(p) for p in self.processes]
+
+            result_tuple = round_robin(
+                procs_copy, 
+                quantum=q, 
+                context_switch_cost=self.context_switch_cost
+            )
+            self._process_results(alg_name, result_tuple)
+
+    def _process_results(self, alg_name: str, result_tuple: tuple):
         """Calcula e armazena métricas e a sequência de execução."""        
         
-        self.all_results["execucao"][alg_name] = format_execution_sequence(completed_processes)       
+        completed_processes, timeline = result_tuple
       
-        metrics = calculate_metrics(completed_processes, alg_name)
-        if quantum is not None:
-            metrics["quantum"] = quantum
-            
-        self.all_results["metricas"].append(metrics)
+        metrics = calculate_metrics(completed_processes, alg_name, self.throughput_window_T)
+
+        self.results[alg_name] = {
+            "metrics": metrics,
+            "completed_processes": completed_processes,
+            "timeline": timeline
+        }
         
     def get_results(self) -> Dict[str, Any]:
         """Retorna todos os resultados da simulação."""
-        return self.all_results
+        return self.results
