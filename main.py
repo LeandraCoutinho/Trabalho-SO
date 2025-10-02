@@ -19,21 +19,18 @@ def main():
         
         results = simulator.get_results()
 
-        
+        if results:
+            # Imprime tabelas
+            display_and_save_results(results)
+
+            # Gera gráficos
+            generate_required_charts(results) 
+
     except FileNotFoundError:
         print(f"ERRO: Arquivo de configuração '{CONFIG_FILE}' não encontrado.")
     except Exception as e:
         print(f"\nERRO FATAL: Ocorreu um problema durante a simulação: {e}")
         return 
-
-  
-    if results:
-        # Imprime tabelas
-        display_and_save_results(results)
-
-        # Gera gráficos
-        generate_required_charts(results["metricas"]) 
-
 
 if __name__ == "__main__":
     main()

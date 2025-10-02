@@ -1,7 +1,6 @@
 import copy
 
 def fcfs(processes, context_switch_cost: int = 0):
-    # Cria uma cópia para não modificar a lista original
     process_list = sorted(copy.deepcopy(processes), key=lambda p: p.arrival_time)
     
     current_time = 0

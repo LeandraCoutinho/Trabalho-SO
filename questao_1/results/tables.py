@@ -23,36 +23,50 @@ def display_and_save_results(results: dict):
     
     print("\n## 1. Tabela de Métricas (Média de Espera, Retorno e Vazão)")
     
-    df_metrics = pd.DataFrame(results["metricas"])
- 
-    columns_to_display = [c for c in ['algorithm', 'quantum', 'avg_waiting_time', 'avg_turnaround_time', 'throughput'] if c in df_metrics.columns]
-    df_metrics_display = df_metrics[columns_to_display].fillna({'quantum': '-'})
+    metrics_list = []
+    for alg_name, data in results.items():
+        metric_summary = {'Algoritmo': alg_name, **data['metrics']}
+        metrics_list.append(metric_summary)
 
-    format_mapping = {
-        col: '{:.2f}'.format for col in df_metrics_display.select_dtypes(include=['float64']).columns
-    }
+    df_metrics = pd.DataFrame(metrics_list)
     
-    print(df_metrics_display.to_string(index=False, formatters=format_mapping))
+    display_columns = {
+        'Algoritmo': 'Algoritmo',
+        'avg_waiting_time': 'Tempo Médio de Espera',
+        'std_waiting_time': 'Desvio Padrão (Espera)',
+        'avg_turnaround_time': 'Tempo Médio de Retorno',
+        'std_turnaround_time': 'Desvio Padrão (Retorno)',
+        'throughput': 'Vazão (Throughput)'
+    }
+
+    # Filtra apenas as colunas que realmente existem para evitar erros
+    existing_cols = [col for col in display_columns.keys() if col in df_metrics.columns]
+    df_metrics_display = df_metrics[existing_cols].rename(columns=display_columns)
+    
+    print(df_metrics_display.to_string(index=False, float_format="%.2f"))
     save_table(df_metrics_display, "metricas_comparativas.csv")
 
     print("\n" + "-" * 60)
     print("## 2. Detalhamento da Sequência de Execução (Tempos Finais)")
     
-    for alg_name, exec_seq in results["execucao"].items():
-        print(f"\n--- Algoritmo: {alg_name} ---")
-        df_exec = pd.DataFrame([asdict(p) for p in exec_seq]) 
+    for alg_name, data in results.items():
+        print(f"\n--- {alg_name} ---")
         
-        display_cols = ['pid', 'arrival_time', 'burst_time', 'start_time', 'finish_time', 'waiting_time', 'turnaround_time']
-        df_exec_display = df_exec[[c for c in display_cols if c in df_exec.columns]].rename(columns={
-            'arrival_time': 'arrival', 
-            'burst_time': 'burst', 
-            'start_time': 'start', 
-            'finish_time': 'end', 
-            'waiting_time': 'waiting',
-            'turnaround_time': 'turnaround' 
-        })
+        # Converte a lista de objetos Process em uma lista de dicionários para o pandas
+        procs_as_dicts = [asdict(p) for p in data['completed_processes']]
+        df_procs = pd.DataFrame(procs_as_dicts)
 
-        print(df_exec_display.to_string(index=False)) # Imprime o DataFrame de exibição
-       
-    print("=" * 60)
-    print("Simulação concluída. Pronto para a apresentação/demonstração.")
+        # Mapeia os nomes das colunas de inglês para português
+        column_mapping = {
+            'pid': 'PID', 'arrival_time': 'Chegada', 'burst_time': 'Duração (Burst)',
+            'start_time': 'Início', 'finish_time': 'Fim', 
+            'waiting_time': 'Tempo de Espera', 'turnaround_time': 'Tempo de Retorno'
+        }
+        existing_proc_cols = [col for col in column_mapping.keys() if col in df_procs.columns]
+        df_procs_display = df_procs[existing_proc_cols].rename(columns=column_mapping)
+        
+        print(df_procs_display.to_string(index=False))
+        
+        # Salva a tabela de detalhamento em um arquivo CSV
+        safe_alg_name = alg_name.replace(' ', '_').replace('=', '').replace('(', '').replace(')', '')
+        save_table(df_procs_display, f"detalhes_{safe_alg_name}.csv")
