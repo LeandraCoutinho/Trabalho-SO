@@ -15,8 +15,8 @@ def fcfs(processes):
         
         current_time += process.burst_time
         
-        process.completion_time = current_time
-        process.turnaround_time = process.completion_time - process.arrival_time
+        process.finish_time = current_time
+        process.turnaround_time = process.finish_time - process.arrival_time
         
         completed_processes.append(process)
         
