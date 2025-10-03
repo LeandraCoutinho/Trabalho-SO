@@ -1,36 +1,23 @@
-from questao_1.simulator.utils import read_json
-from questao_1.simulator.core import Simulator
-from questao_1.results.tables import display_and_save_results
-from questao_1.results.grafics import generate_required_charts
-    
-CONFIG_FILE = "questao_1/config.json"
+import questao_1
+import questao_2
+import questao_3
 
 def main():
-    """Ponto de entrada do programa."""
-    
-    results = None 
-    
-    try:
-        print(f"Carregando configuração de '{CONFIG_FILE}'...")
-        config = read_json(CONFIG_FILE)
-        
-        simulator = Simulator(config)
-        simulator.run_simulation()
-        
-        results = simulator.get_results()
+    print("=== Menu ===")
+    print("1 - Questão 1")
+    print("2 - Questão 2")
+    print("3 - Questão 3")
 
-        if results:
-            # Imprime tabelas
-            display_and_save_results(results)
+    opcao = input("Escolha uma opção: ")
 
-            # Gera gráficos
-            generate_required_charts(results) 
-
-    except FileNotFoundError:
-        print(f"ERRO: Arquivo de configuração '{CONFIG_FILE}' não encontrado.")
-    except Exception as e:
-        print(f"\nERRO FATAL: Ocorreu um problema durante a simulação: {e}")
-        return 
+    if opcao == "1":
+        questao_1.run()
+    elif opcao == "2":
+        questao_2.run()
+    elif opcao == "3":
+        questao_3.run()
+    else:
+        print("Opção inválida!")
 
 if __name__ == "__main__":
     main()

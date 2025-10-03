@@ -11,7 +11,7 @@ class Simulator:
     """
     def __init__(self, config: Dict[str, Any]):
         self.context_switch_cost = config["metadata"]["context_switch_cost"]
-        self.throughput_window_T = config["metadata"]["throughput.window_T"]
+        self.throughput_window_T = config["metadata"]["throughput_window_T"]
         self.algorithms = config["metadata"]["algorithms"]
         self.rr_quantums = config["metadata"]["rr_quantums"]
 
