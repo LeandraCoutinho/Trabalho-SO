@@ -3,7 +3,7 @@
     "challenge_id": "rr_fcfs_sjf_demo",
     "metadata": {
         "context_switch_cost": 1,
-        "throughput.window_T": 100,
+        "throughput_window_T": 100,
         "algorithms": ["FCFS", "SJF", "RR"],
         "rr_quantums": [1, 2, 4, 8, 16]
     },
